@@ -14,42 +14,31 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>('vault');
-  // Replace your existing 'day' logic with this:
-  const [currentDay, _setCurrentDay] = useState(() => {
-  const savedStart = localStorage.getItem('polar_bear_start_date');
-  if (!savedStart) {
-    // This is his first time!
-    const today = new Date().toISOString();
-    localStorage.setItem('polar_bear_start_date', today);
-    return 1;
-  }
-  // If he has visited before, calculate the difference
-  const startDate = new Date(savedStart);
-  const today = new Date();
-  const diff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  return diff;
-});
 
-  if (isLoading) {
-    return <DestinyLoader onComplete={() => setIsLoading(false)} />;
-  }
+  // Logic to calculate the current day based on first visit
+  const [currentDay] = useState(() => {
+    const savedStart = localStorage.getItem('polar_bear_start_date');
+    if (!savedStart) {
+      const today = new Date().toISOString();
+      localStorage.setItem('polar_bear_start_date', today);
+      return 1;
+    }
+    const startDate = new Date(savedStart);
+    const today = new Date();
+    const diff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return diff;
+  });
 
-  if (showLanding) {
-    return <LandingPage onEnter={() => setShowLanding(false)} />;
-  }
+  if (isLoading) return <DestinyLoader onComplete={() => setIsLoading(false)} />;
+  if (showLanding) return <LandingPage onEnter={() => setShowLanding(false)} />;
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'vault':
-        return <TheVault />;
-      case 'garden':
-        return <TheGarden />;
-      case 'triumphs':
-        return <Triumphs />;
-      case 'prayer':
-        return <PrayerCorner />;
-      default:
-        return <TheVault />;
+      case 'vault': return <TheVault currentDay={currentDay} />;
+      case 'garden': return <TheGarden />;
+      case 'triumphs': return <Triumphs />;
+      case 'prayer': return <PrayerCorner />;
+      default: return <TheVault currentDay={currentDay} />;
     }
   };
 
@@ -57,12 +46,6 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <Starfield />
       <Navigation activeSection={activeSection} onSectionChange={setActiveSection} />
-
-      <div>
-        <h1>Welcome to the Polar Bear App</h1>
-        <p>Today is Day {currentDay}</p>
-      </div>
-
       <main className="md:ml-64 relative z-10">
         <div className="mt-16 md:mt-0 max-w-6xl mx-auto px-4 md:px-8 py-8 min-h-screen">
           {renderSection()}
