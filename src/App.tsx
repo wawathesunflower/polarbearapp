@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DestinyLoader from './components/DestinyLoader';
 import LandingPage from './components/LandingPage';
 import Navigation from './components/Navigation';
@@ -14,22 +14,21 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>('vault');
-  const [currentDay, setCurrentDay] = useState(1);
-
-  useEffect(() => {
-    const storedDate = localStorage.getItem('polar_bear_start_date');
-    if (!storedDate) {
-      // Brand new user! Set today as their Day 1
-      localStorage.setItem('polar_bear_start_date', new Date().toISOString());
-      setCurrentDay(1);
-    } else {
-      // Returning user, calculate the difference
-      const start = new Date(storedDate);
-      const now = new Date();
-      const diff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      setCurrentDay(diff);
-    }
-  }, []);
+  // Replace your existing 'day' logic with this:
+  const [currentDay, _setCurrentDay] = useState(() => {
+  const savedStart = localStorage.getItem('polar_bear_start_date');
+  if (!savedStart) {
+    // This is his first time!
+    const today = new Date().toISOString();
+    localStorage.setItem('polar_bear_start_date', today);
+    return 1;
+  }
+  // If he has visited before, calculate the difference
+  const startDate = new Date(savedStart);
+  const today = new Date();
+  const diff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  return diff;
+});
 
   if (isLoading) {
     return <DestinyLoader onComplete={() => setIsLoading(false)} />;
