@@ -14,6 +14,24 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showLanding, setShowLanding] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>('vault');
+  const [currentDay, setCurrentDay] = useState(1);
+  
+  useEffect(() => {
+    const storedStartDate = localStorage.getItem('polar_bear_start_date');
+    const today = new Date();
+  
+    if (!storedStartDate) {
+      // first time opening the app
+      localStorage.setItem('polar_bear_start_date', today.toISOString());
+      setCurrentDay(1);
+    } else {
+      // He has opened it before, calculate how many days since the first time
+      const startDate = new Date(storedStartDate);
+      const diffTime = Math.abs(today.getTime() - startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      setCurrentDay(diffDays);
+    }
+  }, []);
 
   if (isLoading) {
     return <DestinyLoader onComplete={() => setIsLoading(false)} />;
