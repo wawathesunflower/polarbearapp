@@ -58,7 +58,7 @@ export default function TheGarden() {
         setCanChannel(false);
         updateChannelStatus();
       } else {
-        setData({ ...parsed, lastChanneled: '' });
+        setData(parsed);
         setCanChannel(true);
       }
     } else {
@@ -81,7 +81,7 @@ export default function TheGarden() {
     const stored = localStorage.getItem('polar-bear-garden');
     if (!stored) return;
 
-    const lastChanneled = new Date(stored);
+    const lastChanneled = new Date(JSON.parse(stored).lastChanneled);
     const now = new Date();
     const tomorrow = new Date(lastChanneled);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -128,6 +128,9 @@ export default function TheGarden() {
     setShowAnniversaryAnimation(false);
   };
 
+  const displayTotal = Math.max(6, Math.ceil((data.streak || 1) / 6) * 6);
+  const displayCurrent = data.streak === 0 ? 0 : (data.streak % 6 === 0 ? 6 : data.streak % 6);
+
   return (
     <div className="space-y-8">
       {showAnniversaryAnimation && (
@@ -137,16 +140,8 @@ export default function TheGarden() {
               Anniversary Celebration
             </div>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent animate-pulse" />
         </div>
       )}
-
-      <div className="border-b border-cyan-500/20 pb-6">
-        <h1 className="text-4xl font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 tracking-wider">
-          The Garden
-        </h1>
-        <p className="text-gray-400 mt-2 tracking-wide">Tree of Silver Wings</p>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="md:col-span-2 space-y-6 md:space-y-8">
@@ -159,22 +154,19 @@ export default function TheGarden() {
               {getStageLabel(data.treeStage as TreeStage)}
             </h2>
             <p className="text-gray-400 text-sm">{getStageDescription(data.treeStage as TreeStage)}</p>
-            <div className="text-xs text-gray-500 tracking-widest uppercase pt-2">
-              Stage {data.treeStage + 1} of 5
-            </div>
           </div>
 
           <div className="backdrop-blur-md bg-gray-800/20 border border-cyan-500/20 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm tracking-widest uppercase text-gray-400">Growth Progress</span>
               <span className="text-sm text-cyan-400">
-                {(data.streak % 6) || 6} / 6 days
+                {displayCurrent} / {displayTotal} days
               </span>
             </div>
             <div className="h-2 bg-gray-900/50 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-cyan-500 to-teal-400 rounded-full transition-all duration-500"
-                style={{ width: `${((data.streak % 6) || 6) * (100 / 6)}%` }}
+                style={{ width: `${(displayCurrent / displayTotal) * 100}%` }}
               />
             </div>
           </div>
@@ -189,46 +181,30 @@ export default function TheGarden() {
               <p className="text-gray-400 text-sm mt-2 tracking-wider uppercase">Day Streak</p>
             </div>
 
-            <div className="h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
-
             <button
               onClick={canChannel ? channelLight : undefined}
               disabled={!canChannel}
-              className={`w-full py-3 md:py-4 rounded-lg font-light tracking-wider uppercase text-xs md:text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                canChannel
-                  ? 'bg-gradient-to-r from-cyan-600/40 to-teal-600/40 border border-cyan-500/50 hover:border-cyan-400/70 hover:shadow-lg hover:shadow-cyan-500/20 text-cyan-300 cursor-pointer'
-                  : 'bg-gray-800/30 border border-gray-600/30 text-gray-600 cursor-not-allowed'
+              className={`w-full py-4 rounded-lg font-light uppercase text-sm transition-all ${
+                canChannel ? 'bg-cyan-600/40 text-cyan-300' : 'bg-gray-800/30 text-gray-600'
               }`}
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="inline w-4 h-4 mr-2" />
               Channel Light
             </button>
 
-            {!canChannel && nextChannelTime && (
-              <div className="text-xs text-gray-500 tracking-widest">
-                Available in {nextChannelTime}
-              </div>
-            )}
-
+            {/* ANNIVERSARY RESET BUTTON */}
             {showAnniversaryAnimation && (
               <button
                 onClick={resetForAnniversary}
-                className="w-full py-3 bg-gradient-to-r from-yellow-600/40 to-orange-600/40 border border-yellow-500/50 rounded-lg text-yellow-300 text-sm tracking-wider uppercase font-light hover:border-yellow-400/70 transition-all"
+                className="w-full py-3 bg-yellow-600/40 border border-yellow-500/50 rounded-lg text-yellow-300 text-sm tracking-wider uppercase"
               >
                 Celebrate & Reset
               </button>
             )}
-          </div>
 
-          <div className="backdrop-blur-md bg-gray-800/20 border border-cyan-500/20 rounded-lg p-6 space-y-4">
-            <h3 className="text-sm tracking-widest uppercase text-gray-400">Growth Path</h3>
-            <div className="space-y-2 text-xs text-gray-500">
-              <div>Stage 1: 6 days</div>
-              <div>Stage 2: 12 days</div>
-              <div>Stage 3: 18 days</div>
-              <div>Stage 4: 24 days</div>
-              <div>Stage 5: 30+ days</div>
-            </div>
+            {!canChannel && nextChannelTime && (
+              <div className="text-xs text-gray-500">Available in {nextChannelTime}</div>
+            )}
           </div>
         </div>
       </div>
