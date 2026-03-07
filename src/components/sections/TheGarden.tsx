@@ -37,42 +37,33 @@ export default function TheGarden() {
   const [showAnniversaryAnimation, setShowAnniversaryAnimation] = useState(false);
 
   useEffect(() => {
-    loadData();
+    const stored = localStorage.getItem('polar-bear-garden');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setData(parsed);
+      
+      const today = new Date().toDateString();
+      if (new Date(parsed.lastChanneled).toDateString() === today) {
+        setCanChannel(false);
+      } else {
+        setCanChannel(true);
+      }
+    }
     checkAnniversary();
-  }, []);
+  }, []);  
 
+  
   useEffect(() => {
     const timer = setInterval(updateChannelStatus, 1000);
     return () => clearInterval(timer);
   }, [data.lastChanneled]);
 
-  const loadData = () => {
-    const today = new Date().toDateString();
-    const stored = localStorage.getItem('polar-bear-garden');
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      const lastDate = new Date(parsed.lastChanneled).toDateString();
-
-      if (lastDate === today) {
-        setCanChannel(false);
-        updateChannelStatus();
-      } else {
-        setData(parsed);
-        setCanChannel(true);
-      }
-    } else {
-      setCanChannel(true);
-    }
-  };
-
   const checkAnniversary = () => {
     const today = new Date();
     if (today.getDate() === 1) {
       const stored = localStorage.getItem('polar-bear-garden');
-      if (!stored || new Date(stored).getMonth() !== today.getMonth()) {
+      if (!stored || new Date(JSON.parse(stored).lastChanneled).getMonth() !== today.getMonth()) {
         setShowAnniversaryAnimation(true);
-        setTimeout(() => setShowAnniversaryAnimation(false), 3000);
       }
     }
   };
@@ -113,7 +104,6 @@ export default function TheGarden() {
     localStorage.setItem('polar-bear-garden', JSON.stringify(newData));
     setData(newData);
     setCanChannel(false);
-    updateChannelStatus();
   };
 
   const resetForAnniversary = () => {
@@ -133,29 +123,33 @@ export default function TheGarden() {
 
   return (
     <div className="space-y-8">
+      {/* Anniversary Popup */}
       {showAnniversaryAnimation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="animate-pulse">
-            <div className="text-6xl font-light text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-cyan-400 to-blue-400 tracking-wider text-center">
-              Anniversary Celebration
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="text-center p-8">
+            <h2 className="text-4xl text-yellow-400 mb-4">Anniversary Celebration</h2>
+            <button 
+              onClick={resetForAnniversary}
+              className="px-6 py-2 bg-yellow-600 text-white rounded"
+            >
+              Celebrate & Reset
+            </button>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-        <div className="md:col-span-2 space-y-6 md:space-y-8">
-          <div className="backdrop-blur-md bg-gradient-to-br from-cyan-900/30 to-teal-900/20 border border-cyan-500/30 rounded-xl p-6 md:p-12 shadow-xl flex justify-center overflow-x-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Left Side: Tree */}
+        <div className="md:col-span-2 space-y-8">
+          <div className="border border-cyan-500/30 rounded-xl p-12 flex justify-center">
             <Tree stage={data.treeStage} />
           </div>
-
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl font-light text-cyan-300 tracking-wider">
-              {getStageLabel(data.treeStage as TreeStage)}
-            </h2>
-            <p className="text-gray-400 text-sm">{getStageDescription(data.treeStage as TreeStage)}</p>
+          <div className="text-center">
+            <h2 className="text-2xl text-cyan-300">{getStageLabel(data.treeStage)}</h2>
+            <p className="text-gray-400">{getStageDescription(data.treeStage)}</p>
           </div>
 
+          {/* GROWTH PROGRESS BAR */}
           <div className="backdrop-blur-md bg-gray-800/20 border border-cyan-500/20 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm tracking-widest uppercase text-gray-400">Growth Progress</span>
@@ -172,38 +166,23 @@ export default function TheGarden() {
           </div>
         </div>
 
+        {/* Right Side: Controls */}
         <div className="space-y-6">
-          <div className="backdrop-blur-md bg-gradient-to-br from-cyan-900/40 to-blue-900/30 border border-cyan-500/40 rounded-xl p-8 shadow-xl text-center space-y-6">
-            <div>
-              <div className="text-5xl font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-teal-300">
-                {data.streak}
-              </div>
-              <p className="text-gray-400 text-sm mt-2 tracking-wider uppercase">Day Streak</p>
-            </div>
+          <div className="bg-gradient-to-br from-cyan-900/40 to-blue-900/30 border border-cyan-500/40 rounded-xl p-8 text-center">
+            <div className="text-5xl text-cyan-300">{data.streak}</div>
+            <p className="text-gray-400 uppercase text-sm">Day Streak</p>
 
             <button
-              onClick={canChannel ? channelLight : undefined}
+              onClick={channelLight}
               disabled={!canChannel}
-              className={`w-full py-4 rounded-lg font-light uppercase text-sm transition-all ${
-                canChannel ? 'bg-cyan-600/40 text-cyan-300' : 'bg-gray-800/30 text-gray-600'
-              }`}
+              className={`w-full mt-6 py-4 rounded-lg ${canChannel ? 'bg-cyan-600/40 text-cyan-300' : 'bg-gray-800 text-gray-600'}`}
             >
               <Zap className="inline w-4 h-4 mr-2" />
-              Channel Light
+              {canChannel ? "Channel Light" : "Channeling Complete"}
             </button>
 
-            {/* ANNIVERSARY RESET BUTTON */}
-            {showAnniversaryAnimation && (
-              <button
-                onClick={resetForAnniversary}
-                className="w-full py-3 bg-yellow-600/40 border border-yellow-500/50 rounded-lg text-yellow-300 text-sm tracking-wider uppercase"
-              >
-                Celebrate & Reset
-              </button>
-            )}
-
-            {!canChannel && nextChannelTime && (
-              <div className="text-xs text-gray-500">Available in {nextChannelTime}</div>
+            {!canChannel && (
+              <div className="text-xs text-gray-500 mt-2">Available in {nextChannelTime}</div>
             )}
           </div>
         </div>
